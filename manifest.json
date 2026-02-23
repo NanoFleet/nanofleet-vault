@@ -1,0 +1,18 @@
+{
+  "name": "nanofleet-vault",
+  "version": "0.0.1",
+  "description": "Secret manager with per-agent access control",
+  "author": "NanoFleet",
+  "image": "ghcr.io/nanofleet/nanofleet-vault:latest",
+  "mcpPort": 8823,
+  "uiPort": 8822,
+  "mountShared": false,
+  "requiredEnvVars": [],
+  "generateEnvVars": ["VAULT_ENCRYPTION_KEY"],
+  "sidebar": {
+    "icon": "KeyRound",
+    "label": "Vault",
+    "route": "/plugins/nanofleet-vault/ui"
+  },
+  "toolsDoc": "## nanofleet-vault — Secret Manager\n\n### get_secret\nRetrieve a secret value you are authorized to access.\n- `name` (string): the secret name (e.g. `\"GITHUB_TOKEN\"`)\n\nReturns `{ name, value }` if authorized, or an error if not authorized or not found.\n\n## CRITICAL rules\n- Only call `get_secret` when you actually need the value for a task.\n- Never log, print or include secret values in messages, comments or results visible to others."
+}

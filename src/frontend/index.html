@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NanoFleet Vault</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      color: #171717;
+      background: #fafafa;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    #header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 52px;
+      border-bottom: 1px solid #e5e5e5;
+      background: #fff;
+      flex-shrink: 0;
+    }
+    #header h1 { font-size: 15px; font-weight: 600; }
+    #header .subtitle { font-size: 12px; color: #737373; margin-left: 8px; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: background 0.15s;
+    }
+    .btn-primary { background: #171717; color: #fff; }
+    .btn-primary:hover { background: #404040; }
+    .btn-secondary { background: #f5f5f5; color: #171717; border: 1px solid #e5e5e5; }
+    .btn-secondary:hover { background: #e5e5e5; }
+    .btn-danger { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .btn-danger:hover { background: #fecaca; }
+    .btn-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 4px;
+      color: #a3a3a3;
+      font-size: 13px;
+    }
+    .btn-icon:hover { background: #f5f5f5; color: #171717; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Content ── */
+    #content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    /* ── Table ── */
+    .secrets-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #e5e5e5;
+      overflow: hidden;
+    }
+    .secrets-table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #737373;
+      padding: 10px 14px;
+      border-bottom: 1px solid #e5e5e5;
+      background: #fafafa;
+    }
+    .secrets-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f5f5f5;
+      vertical-align: middle;
+    }
+    .secrets-table tr:last-child td { border-bottom: none; }
+    .secrets-table tr:hover td { background: #fafafa; }
+
+    .secret-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #171717;
+      font-family: 'SF Mono', 'Fira Mono', monospace;
+    }
+    .secret-desc {
+      font-size: 12px;
+      color: #737373;
+      margin-top: 2px;
+    }
+    .secret-value-placeholder {
+      font-size: 13px;
+      color: #a3a3a3;
+      letter-spacing: 2px;
+    }
+
+    .agent-chips {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .agent-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #f5f5f5;
+      border-radius: 999px;
+      padding: 2px 8px 2px 5px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #525252;
+    }
+    .avatar-xs {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #171717;
+      color: #fff;
+      font-size: 8px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .row-actions { display: flex; gap: 4px; justify-content: flex-end; }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #a3a3a3;
+    }
+    .empty-state p { font-size: 13px; margin-top: 6px; }
+
+    /* ── Modal ── */
+    #modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.4);
+      z-index: 50;
+      align-items: center;
+      justify-content: center;
+    }
+    #modal-overlay.open { display: flex; }
+    #modal {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      width: 460px;
+      max-width: calc(100vw - 32px);
+      box-shadow: 0 20px 60px rgba(0,0,0,.2);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    #modal h2 { font-size: 16px; font-weight: 600; }
+
+    .form-field { display: flex; flex-direction: column; gap: 5px; }
+    .form-field label { font-size: 12px; font-weight: 500; color: #525252; }
+    .form-field input:not([type="checkbox"]),
+    .form-field textarea {
+      padding: 8px 10px;
+      border: 1px solid #e5e5e5;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      color: #171717;
+      width: 100%;
+    }
+    .form-field input:focus,
+    .form-field textarea:focus { outline: none; border-color: #a3a3a3; }
+
+    .value-field-wrapper { position: relative; }
+    .value-field-wrapper input { padding-right: 36px; font-family: 'SF Mono', 'Fira Mono', monospace; }
+    .toggle-visibility {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #a3a3a3;
+      font-size: 13px;
+      padding: 2px;
+    }
+    .toggle-visibility:hover { color: #525252; }
+
+    .value-hint { font-size: 11px; color: #a3a3a3; margin-top: 2px; }
+
+    .agent-checkboxes {
+      max-height: 140px;
+      overflow-y: auto;
+      border: 1px solid #e5e5e5;
+      border-radius: 6px;
+      background: #fff;
+    }
+    .agent-checkbox {
+      display: flex;
+      align-items: center;
+      padding: 7px 10px;
+      font-size: 13px;
+      cursor: pointer;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .agent-checkbox:last-child { border-bottom: none; }
+    .agent-checkbox:hover { background: #fafafa; }
+    .agent-checkbox input[type="checkbox"] { cursor: pointer; flex-shrink: 0; margin-right: 8px; }
+    .agent-checkbox span { font-size: 13px; color: #171717; }
+
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+    #error-msg {
+      font-size: 12px;
+      color: #b91c1c;
+      background: #fee2e2;
+      border-radius: 6px;
+      padding: 8px 10px;
+      display: none;
+    }
+    #error-msg.visible { display: block; }
+  </style>
+</head>
+<body>
+
+<div id="header">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <h1>Vault</h1>
+    <span class="subtitle">Secret manager</span>
+  </div>
+  <button class="btn btn-primary" id="new-secret-btn">+ New Secret</button>
+</div>
+
+<div id="content">
+  <div id="secrets-container"></div>
+</div>
+
+<!-- Modal -->
+<div id="modal-overlay">
+  <div id="modal">
+    <h2 id="modal-title">New Secret</h2>
+    <div id="error-msg"></div>
+    <div class="form-field">
+      <label>Name * <span style="font-weight:400;color:#a3a3a3">(e.g. GITHUB_TOKEN)</span></label>
+      <input type="text" id="secret-name" placeholder="MY_SECRET_KEY" style="font-family:'SF Mono','Fira Mono',monospace" />
+    </div>
+    <div class="form-field">
+      <label>Description <span style="font-weight:400;color:#a3a3a3">(optional)</span></label>
+      <input type="text" id="secret-description" placeholder="What is this secret for?" />
+    </div>
+    <div class="form-field">
+      <label id="value-label">Value *</label>
+      <div class="value-field-wrapper">
+        <input type="password" id="secret-value" placeholder="Enter secret value" autocomplete="new-password" />
+        <button class="toggle-visibility" id="toggle-visibility" type="button" title="Show/hide value">👁</button>
+      </div>
+      <span class="value-hint" id="value-hint"></span>
+    </div>
+    <div class="form-field">
+      <label>Authorized agents</label>
+      <div class="agent-checkboxes" id="agent-checkboxes">
+        <span style="color:#a3a3a3;font-size:12px;">Loading agents…</span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const BASE = window.location.origin + window.location.pathname.replace(/\/$/, '');
+
+  let secrets = [];
+  let agents = [];
+  let editingId = null;
+
+  // ── API ────────────────────────────────────────────────────────────────────
+  async function api(method, path, body) {
+    const opts = { method, headers: { 'Content-Type': 'application/json' } };
+    if (body !== undefined) opts.body = JSON.stringify(body);
+    const r = await fetch(BASE + path, opts);
+    if (!r.ok) {
+      const data = await r.json().catch(() => ({}));
+      throw new Error(data.error || `HTTP ${r.status}`);
+    }
+    return r.json();
+  }
+
+  function esc(s) {
+    return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function initial(name) { return (name || '?')[0].toUpperCase(); }
+
+  function agentName(id) {
+    const a = agents.find(a => a.id === id);
+    return a ? a.name : id.slice(0, 8);
+  }
+
+  // ── Fetch ──────────────────────────────────────────────────────────────────
+  async function fetchAll() {
+    await fetchAgents();
+    await fetchSecrets();
+  }
+
+  async function fetchAgents() {
+    try {
+      const data = await api('GET', '/agents');
+      agents = data.agents || [];
+    } catch {}
+  }
+
+  async function fetchSecrets() {
+    try {
+      const data = await api('GET', '/secrets');
+      secrets = data.secrets || [];
+      renderSecrets();
+    } catch {
+      document.getElementById('secrets-container').innerHTML =
+        '<p style="color:#ef4444;padding:20px">Failed to load secrets.</p>';
+    }
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+  function renderSecrets() {
+    const container = document.getElementById('secrets-container');
+    if (secrets.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <p>No secrets yet. Add one to get started.</p>
+        </div>`;
+      return;
+    }
+
+    const rows = secrets.map(s => {
+      const chips = (s.agentIds || []).map(id => `
+        <div class="agent-chip">
+          <div class="avatar-xs">${esc(initial(agentName(id)))}</div>
+          ${esc(agentName(id))}
+        </div>`).join('');
+
+      return `
+        <tr>
+          <td>
+            <div class="secret-name">${esc(s.name)}</div>
+            ${s.description ? `<div class="secret-desc">${esc(s.description)}</div>` : ''}
+          </td>
+          <td><span class="secret-value-placeholder">••••••••</span></td>
+          <td>
+            <div class="agent-chips">
+              ${chips || '<span style="font-size:12px;color:#a3a3a3">No agents</span>'}
+            </div>
+          </td>
+          <td>
+            <div class="row-actions">
+              <button class="btn-icon" onclick="openEdit('${esc(s.id)}')" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn-icon" onclick="deleteSecret('${esc(s.id)}', '${esc(s.name)}')" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+
+    container.innerHTML = `
+      <table class="secrets-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Value</th>
+            <th>Authorized agents</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  // ── Modal ──────────────────────────────────────────────────────────────────
+  function renderAgentCheckboxes(selectedIds = []) {
+    const container = document.getElementById('agent-checkboxes');
+    if (agents.length === 0) {
+      container.innerHTML = '<span style="color:#a3a3a3;font-size:12px">No running agents found.</span>';
+      return;
+    }
+    container.innerHTML = agents.map(a => `
+      <label class="agent-checkbox">
+        <input type="checkbox" value="${esc(a.id)}" ${selectedIds.includes(a.id) ? 'checked' : ''} />
+        <span>${esc(a.name)}</span>
+      </label>`).join('');
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('error-msg');
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  function clearError() {
+    const el = document.getElementById('error-msg');
+    el.textContent = '';
+    el.classList.remove('visible');
+  }
+
+  function openNew() {
+    editingId = null;
+    document.getElementById('modal-title').textContent = 'New Secret';
+    document.getElementById('secret-name').value = '';
+    document.getElementById('secret-name').disabled = false;
+    document.getElementById('secret-description').value = '';
+    document.getElementById('secret-value').value = '';
+    document.getElementById('secret-value').placeholder = 'Enter secret value';
+    document.getElementById('value-label').textContent = 'Value *';
+    document.getElementById('value-hint').textContent = '';
+    clearError();
+    renderAgentCheckboxes();
+    document.getElementById('modal-overlay').classList.add('open');
+    document.getElementById('secret-name').focus();
+  }
+
+  function openEdit(id) {
+    const s = secrets.find(s => s.id === id);
+    if (!s) return;
+    editingId = id;
+    document.getElementById('modal-title').textContent = 'Edit Secret';
+    document.getElementById('secret-name').value = s.name;
+    document.getElementById('secret-name').disabled = false;
+    document.getElementById('secret-description').value = s.description || '';
+    document.getElementById('secret-value').value = '';
+    document.getElementById('secret-value').placeholder = '(leave blank to keep current value)';
+    document.getElementById('value-label').textContent = 'New Value';
+    document.getElementById('value-hint').textContent = 'Leave blank to keep the existing value.';
+    clearError();
+    renderAgentCheckboxes(s.agentIds || []);
+    document.getElementById('modal-overlay').classList.add('open');
+    document.getElementById('secret-description').focus();
+  }
+
+  function closeModal() {
+    editingId = null;
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+
+  async function saveSecret() {
+    clearError();
+    const name = document.getElementById('secret-name').value.trim();
+    const description = document.getElementById('secret-description').value.trim();
+    const value = document.getElementById('secret-value').value;
+    const agentIds = [...document.querySelectorAll('#agent-checkboxes input:checked')].map(el => el.value);
+
+    if (!name) { showError('Name is required.'); return; }
+    if (!editingId && !value) { showError('Value is required.'); return; }
+
+    const btn = document.getElementById('modal-save');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    try {
+      if (editingId) {
+        const body = { name, description: description || null, agentIds };
+        if (value) body.value = value;
+        await api('PUT', '/secrets/' + editingId, body);
+      } else {
+        await api('POST', '/secrets', { name, description: description || undefined, value, agentIds });
+      }
+      closeModal();
+      await fetchSecrets();
+    } catch (e) {
+      showError(e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Save';
+    }
+  }
+
+  async function deleteSecret(id, name) {
+    if (!confirm(`Delete secret "${name}"? This cannot be undone.`)) return;
+    try {
+      await api('DELETE', '/secrets/' + id);
+      await fetchSecrets();
+    } catch (e) {
+      alert('Error: ' + e.message);
+    }
+  }
+
+  // ── Toggle password visibility ─────────────────────────────────────────────
+  document.getElementById('toggle-visibility').addEventListener('click', () => {
+    const input = document.getElementById('secret-value');
+    input.type = input.type === 'password' ? 'text' : 'password';
+  });
+
+  // ── Wiring ─────────────────────────────────────────────────────────────────
+  document.getElementById('new-secret-btn').addEventListener('click', openNew);
+  document.getElementById('modal-cancel').addEventListener('click', closeModal);
+  document.getElementById('modal-save').addEventListener('click', saveSecret);
+  document.getElementById('modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  });
+  document.getElementById('secret-value').addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveSecret();
+  });
+
+  // ── Boot ───────────────────────────────────────────────────────────────────
+  fetchAll();
+</script>
+</body>
+</html>
