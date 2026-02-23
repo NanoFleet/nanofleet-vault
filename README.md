@@ -11,9 +11,8 @@ A [NanoFleet](https://github.com/NanoFleet/nanofleet) plugin that provides a sec
 
 ## MCP Tool
 
-### `get_secret`
-
-Retrieve a secret value you are authorized to access.
+<details>
+<summary><code>get_secret</code> — Retrieve a secret value you are authorized to access</summary>
 
 **Input:**
 ```json
@@ -33,6 +32,8 @@ Retrieve a secret value you are authorized to access.
 > **Critical rules for agents:**
 > - Only call `get_secret` when you actually need the value for a task
 > - Never log, print, or include secret values in messages or results visible to others
+
+</details>
 
 ## REST API
 
