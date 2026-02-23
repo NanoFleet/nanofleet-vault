@@ -60,11 +60,6 @@ Install via the NanoFleet Plugins page using the manifest URL:
 https://raw.githubusercontent.com/NanoFleet/nanofleet-vault/main/manifest.json
 ```
 
-NanoFleet will automatically:
-- Pull and start the Docker container
-- Generate a unique `VAULT_ENCRYPTION_KEY` for encryption at rest
-- Link the plugin to all existing agents
-
 ## Docker image
 
 Built and pushed automatically to GHCR on every merge to `main`:
