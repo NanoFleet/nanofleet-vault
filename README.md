@@ -2,6 +2,8 @@
 
 A [NanoFleet](https://github.com/NanoFleet/nanofleet) plugin that provides a secret manager with per-agent access control. Store API keys, tokens, and passwords securely — agents can only retrieve secrets they are explicitly authorized to access.
 
+<img width="2358" height="1486" alt="nanofleet-vault" src="https://github.com/user-attachments/assets/0bb91905-4606-40ab-95f1-01237f9354cb" />
+
 ## Features
 
 - Secrets encrypted at rest (XOR+base64, keyed by a unique `VAULT_ENCRYPTION_KEY` auto-generated at install)
@@ -58,12 +60,4 @@ Install via the NanoFleet Plugins page using the manifest URL:
 
 ```
 https://raw.githubusercontent.com/NanoFleet/nanofleet-vault/main/manifest.json
-```
-
-## Docker image
-
-Built and pushed automatically to GHCR on every merge to `main`:
-
-```
-ghcr.io/nanofleet/nanofleet-vault:latest
 ```
