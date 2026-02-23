@@ -17,7 +17,7 @@ export function getCallerAgentId(): string {
 export function createMcpServer(): McpServer {
 	const server = new McpServer({
 		name: 'nanofleet-vault',
-		version: '1.0.0',
+		version: '0.0.1',
 	});
 
 	// --- tool: get_secret ---
