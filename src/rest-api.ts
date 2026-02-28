@@ -32,10 +32,9 @@ export function createRestApp(): Hono {
 	app.get('/', async () => {
 		try {
 			const html = Bun.file('/app/src/frontend/index.html');
-			if (!html || html.size === 0) {
+			if (html.size === 0) {
 				return new Response('Frontend index file not found.', { status: 500 });
 			}
-			await html.arrayBuffer();
 			return new Response(html, { headers: { 'Content-Type': 'text/html' } });
 		} catch {
 			return new Response('Failed to load frontend index file.', {
