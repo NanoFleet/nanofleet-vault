@@ -76,10 +76,13 @@ export function createMcpServer(): McpServer {
 // ---------------------------------------------------------------------------
 
 export async function startMcpServer(): Promise<void> {
-	const server = createMcpServer();
 	const sessions = new Map<
 		string,
-		{ transport: WebStandardStreamableHTTPServerTransport; agentId: string }
+		{
+			server: McpServer;
+			transport: WebStandardStreamableHTTPServerTransport;
+			agentId: string;
+		}
 	>();
 
 	Bun.serve({
@@ -99,7 +102,6 @@ export async function startMcpServer(): Promise<void> {
 			}
 
 			if (sessionId && sessions.has(sessionId)) {
-				// sessions.has() guarantees the entry exists
 				// biome-ignore lint/style/noNonNullAssertion: Map.has() above confirms the key exists
 				const { transport, agentId: sessionAgentId } = sessions.get(sessionId)!;
 				return agentIdStorage.run(sessionAgentId, () =>
@@ -107,11 +109,13 @@ export async function startMcpServer(): Promise<void> {
 				);
 			}
 
+			// New session: each gets its own McpServer + transport instance
+			const server = createMcpServer();
 			const transport = new WebStandardStreamableHTTPServerTransport({
 				sessionIdGenerator: () => crypto.randomUUID(),
 				enableJsonResponse: true,
 				onsessioninitialized: (sid) => {
-					sessions.set(sid, { transport, agentId: agentIdFromUrl });
+					sessions.set(sid, { server, transport, agentId: agentIdFromUrl });
 				},
 				onclose: () => {
 					if (transport.sessionId) sessions.delete(transport.sessionId);
