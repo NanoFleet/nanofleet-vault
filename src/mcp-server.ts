@@ -97,7 +97,13 @@ export async function startMcpServer(): Promise<void> {
 			}
 
 			if (sessionId && sessions.has(sessionId)) {
-				const { transport, agentId: sessionAgentId } = sessions.get(sessionId)!;
+				// sessions.has() guarantees the entry exists
+				const { transport, agentId: sessionAgentId } = sessions.get(
+					sessionId,
+				) as {
+					transport: WebStandardStreamableHTTPServerTransport;
+					agentId: string;
+				};
 				return agentIdStorage.run(sessionAgentId, () =>
 					transport.handleRequest(req),
 				);
