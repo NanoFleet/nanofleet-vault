@@ -12,6 +12,10 @@ import {
 const NANO_API_URL =
 	process.env.NANO_API_URL ?? 'http://host.docker.internal:3000';
 const NANO_INTERNAL_TOKEN = process.env.NANO_INTERNAL_TOKEN ?? '';
+const REST_API_PORT =
+	process.env.REST_API_PORT !== undefined
+		? Number(process.env.REST_API_PORT)
+		: 8822;
 
 function nanoHeaders() {
 	return {
@@ -25,9 +29,19 @@ export function createRestApp(): Hono {
 	app.use('*', cors());
 
 	// Serve frontend
-	app.get('/', () => {
-		const html = Bun.file('/app/src/frontend/index.html');
-		return new Response(html, { headers: { 'Content-Type': 'text/html' } });
+	app.get('/', async () => {
+		try {
+			const html = Bun.file('/app/src/frontend/index.html');
+			if (!html || html.size === 0) {
+				return new Response('Frontend index file not found.', { status: 500 });
+			}
+			await html.arrayBuffer();
+			return new Response(html, { headers: { 'Content-Type': 'text/html' } });
+		} catch {
+			return new Response('Failed to load frontend index file.', {
+				status: 500,
+			});
+		}
 	});
 
 	// Proxy: list running agents from NanoFleet
@@ -48,7 +62,7 @@ export function createRestApp(): Hono {
 					504,
 				);
 			}
-			return c.json({ error: String(err) }, 500);
+			return c.json({ error: 'Failed to fetch agents' }, 500);
 		}
 	});
 
@@ -116,7 +130,10 @@ export function createRestApp(): Hono {
 		}
 
 		try {
-			updateSecret(id, body);
+			const success = updateSecret(id, body);
+			if (!success) {
+				return c.json({ error: 'Secret not found' }, 404);
+			}
 		} catch (err: unknown) {
 			const msg = err instanceof Error ? err.message : String(err);
 			if (msg.includes('UNIQUE constraint')) {
@@ -149,9 +166,9 @@ export async function startRestApi(): Promise<void> {
 	const app = createRestApp();
 
 	Bun.serve({
-		port: 8822,
+		port: REST_API_PORT,
 		fetch: app.fetch,
 	});
 
-	console.log('[REST] Server listening on :8822');
+	console.log(`[REST] Server listening on :${REST_API_PORT}`);
 }
