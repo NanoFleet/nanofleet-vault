@@ -4,7 +4,6 @@ import {
 	createSecret,
 	deleteSecret,
 	getGrantedAgents,
-	getSecretById,
 	listSecrets,
 	updateSecret,
 } from './db';
@@ -32,7 +31,8 @@ export function createRestApp(): Hono {
 	app.get('/', async () => {
 		try {
 			const html = Bun.file('/app/src/frontend/index.html');
-			if (html.size === 0) {
+			const exists = await html.exists();
+			if (!exists || html.size === 0) {
 				return new Response('Frontend index file not found.', { status: 500 });
 			}
 			return new Response(html, { headers: { 'Content-Type': 'text/html' } });
@@ -51,8 +51,17 @@ export function createRestApp(): Hono {
 				signal: AbortSignal.timeout(5000),
 			});
 			if (!res.ok) return c.json({ error: 'Failed to fetch agents' }, 502);
-			const data = (await res.json()) as { agents: Array<{ status: string }> };
-			const running = data.agents.filter((a) => a.status === 'running');
+			const data: unknown = await res.json();
+			if (
+				!data ||
+				typeof data !== 'object' ||
+				!('agents' in data) ||
+				!Array.isArray((data as { agents: unknown }).agents)
+			) {
+				return c.json({ error: 'Invalid response from NanoFleet' }, 502);
+			}
+			const agents = (data as { agents: Array<{ status?: string }> }).agents;
+			const running = agents.filter((a) => a.status === 'running');
 			return c.json({ agents: running });
 		} catch (err) {
 			if (err instanceof Error && err.name === 'AbortError') {
@@ -67,9 +76,8 @@ export function createRestApp(): Hono {
 
 	// GET /secrets — list all (no values)
 	app.get('/secrets', (c) => {
-		const secrets = listSecrets().map(
-			({ encrypted_value: _v, ...rest }) => rest,
-		);
+		// Intentionally omit encrypted_value from the response for security reasons
+		const secrets = listSecrets().map(({ encrypted_value, ...rest }) => rest);
 		return c.json({ secrets });
 	});
 
@@ -129,10 +137,13 @@ export function createRestApp(): Hono {
 		}
 
 		try {
-			const success = updateSecret(id, body);
-			if (!success) {
+			const updated = updateSecret(id, body);
+			if (!updated) {
 				return c.json({ error: 'Secret not found' }, 404);
 			}
+			const agentIds = getGrantedAgents(id);
+			const { encrypted_value: _v, ...safe } = updated;
+			return c.json({ secret: { ...safe, agentIds } });
 		} catch (err: unknown) {
 			const msg = err instanceof Error ? err.message : String(err);
 			if (msg.includes('UNIQUE constraint')) {
@@ -143,12 +154,6 @@ export function createRestApp(): Hono {
 			}
 			return c.json({ error: msg }, 500);
 		}
-
-		const updated = getSecretById(id);
-		if (!updated) return c.json({ error: 'Secret not found' }, 404);
-		const agentIds = getGrantedAgents(id);
-		const { encrypted_value: _v, ...safe } = updated;
-		return c.json({ secret: { ...safe, agentIds } });
 	});
 
 	// DELETE /secrets/:id
