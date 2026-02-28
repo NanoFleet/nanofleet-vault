@@ -150,7 +150,6 @@ export function updateSecret(
 
 export function deleteSecret(id: string): boolean {
 	const db = getDb();
-	db.run('DELETE FROM secret_grants WHERE secret_id = ?', [id]);
 	const result = db.run('DELETE FROM secrets WHERE id = ?', [id]);
 	return result.changes > 0;
 }
