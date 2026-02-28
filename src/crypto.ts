@@ -1,4 +1,9 @@
-import { createCipheriv, createDecipheriv, pbkdf2Sync, randomBytes } from 'node:crypto';
+import {
+	createCipheriv,
+	createDecipheriv,
+	pbkdf2Sync,
+	randomBytes,
+} from 'node:crypto';
 
 const PBKDF2_ITERATIONS = 100_000;
 const KEY_LENGTH = 32;
