@@ -43,7 +43,10 @@ export function createRestApp(): Hono {
 			return c.json({ agents: running });
 		} catch (err) {
 			if (err instanceof Error && err.name === 'AbortError') {
-				return c.json({ error: 'Request to NanoFleet timed out after 5 seconds' }, 504);
+				return c.json(
+					{ error: 'Request to NanoFleet timed out after 5 seconds' },
+					504,
+				);
 			}
 			return c.json({ error: String(err) }, 500);
 		}
