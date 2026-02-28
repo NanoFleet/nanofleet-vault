@@ -98,12 +98,8 @@ export async function startMcpServer(): Promise<void> {
 
 			if (sessionId && sessions.has(sessionId)) {
 				// sessions.has() guarantees the entry exists
-				const { transport, agentId: sessionAgentId } = sessions.get(
-					sessionId,
-				) as {
-					transport: WebStandardStreamableHTTPServerTransport;
-					agentId: string;
-				};
+				// biome-ignore lint/style/noNonNullAssertion: Map.has() above confirms the key exists
+				const { transport, agentId: sessionAgentId } = sessions.get(sessionId)!;
 				return agentIdStorage.run(sessionAgentId, () =>
 					transport.handleRequest(req),
 				);

@@ -42,6 +42,12 @@ export function createRestApp(): Hono {
 			const running = data.agents.filter((a) => a.status === 'running');
 			return c.json({ agents: running });
 		} catch (err) {
+			if (err instanceof Error && err.name === 'AbortError') {
+				return c.json(
+					{ error: 'Request to NanoFleet timed out after 5 seconds' },
+					504,
+				);
+			}
 			return c.json({ error: String(err) }, 500);
 		}
 	});
@@ -96,7 +102,6 @@ export function createRestApp(): Hono {
 	// PUT /secrets/:id — update (value optional — omit to keep existing)
 	app.put('/secrets/:id', async (c) => {
 		const id = c.req.param('id');
-		if (!getSecretById(id)) return c.json({ error: 'Secret not found' }, 404);
 
 		let body: {
 			name?: string;
