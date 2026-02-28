@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import {
 	createSecret,
 	deleteSecret,
+	getGrantedAgents,
 	getSecretById,
 	listSecrets,
 	updateSecret,
@@ -122,9 +123,10 @@ export function createRestApp(): Hono {
 			return c.json({ error: msg }, 500);
 		}
 
-		const updated = listSecrets().find((s) => s.id === id);
+		const updated = getSecretById(id);
 		if (!updated) return c.json({ error: 'Secret not found' }, 404);
-		const { agentIds, encrypted_value: _v, ...safe } = updated;
+		const agentIds = getGrantedAgents(id);
+		const { encrypted_value: _v, ...safe } = updated;
 		return c.json({ secret: { ...safe, agentIds } });
 	});
 

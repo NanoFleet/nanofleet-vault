@@ -30,7 +30,8 @@ function initSchema() {
     CREATE TABLE IF NOT EXISTS secret_grants (
       secret_id TEXT NOT NULL,
       agent_id TEXT NOT NULL,
-      PRIMARY KEY (secret_id, agent_id)
+      PRIMARY KEY (secret_id, agent_id),
+      FOREIGN KEY (secret_id) REFERENCES secrets(id) ON DELETE CASCADE
     );
   `);
 }

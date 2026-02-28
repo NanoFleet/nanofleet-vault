@@ -74,6 +74,7 @@ export function createMcpServer(): McpServer {
 // ---------------------------------------------------------------------------
 
 export async function startMcpServer(): Promise<void> {
+	const server = createMcpServer();
 	const sessions = new Map<
 		string,
 		{ transport: WebStandardStreamableHTTPServerTransport; agentId: string }
@@ -96,9 +97,13 @@ export async function startMcpServer(): Promise<void> {
 			}
 
 			if (sessionId && sessions.has(sessionId)) {
-				const session = sessions.get(sessionId);
-				if (!session) return new Response(null, { status: 500 });
-				const { transport, agentId: sessionAgentId } = session;
+				// sessions.has() guarantees the entry exists
+				const { transport, agentId: sessionAgentId } = sessions.get(
+					sessionId,
+				) as {
+					transport: WebStandardStreamableHTTPServerTransport;
+					agentId: string;
+				};
 				return agentIdStorage.run(sessionAgentId, () =>
 					transport.handleRequest(req),
 				);
@@ -110,13 +115,11 @@ export async function startMcpServer(): Promise<void> {
 				onsessioninitialized: (sid) => {
 					sessions.set(sid, { transport, agentId: agentIdFromUrl });
 				},
+				onclose: () => {
+					if (transport.sessionId) sessions.delete(transport.sessionId);
+				},
 			});
 
-			transport.onclose = () => {
-				if (transport.sessionId) sessions.delete(transport.sessionId);
-			};
-
-			const server = createMcpServer();
 			await server.connect(transport);
 
 			return agentIdStorage.run(agentIdFromUrl, () =>

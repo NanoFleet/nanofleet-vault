@@ -15,11 +15,11 @@ Include as much of the following as possible:
 
 ## Encryption Model
 
-nanofleet-vault uses XOR+Base64 obfuscation keyed by `VAULT_ENCRYPTION_KEY` to protect secrets at rest. This provides obfuscation against casual inspection of the database file, but is **not** cryptographically strong encryption. Anyone with access to both the database and the `VAULT_ENCRYPTION_KEY` can recover all secret values.
+nanofleet-vault encrypts secrets at rest using **AES-256-GCM** with a unique random salt and IV per secret. The encryption key is derived from `VAULT_ENCRYPTION_KEY` via **PBKDF2-SHA256** (100,000 iterations, 16-byte random salt). The GCM auth tag provides integrity verification — any tampering with the ciphertext will cause decryption to fail. Anyone with access to both the database (or any of its backups/snapshots) and the `VAULT_ENCRYPTION_KEY` can recover all secret values.
 
 The threat model assumes:
 - The host running NanoFleet is trusted
-- The database file (`/data/nanofleet-vault.db`) is not directly accessible to untrusted parties
+- The database file (`/data/nanofleet-vault.db`) and any backups, snapshots, or replicas of it are **never** accessible to untrusted parties
 - `VAULT_ENCRYPTION_KEY` is kept confidential
 
 ## Security Best Practices
@@ -27,3 +27,4 @@ The threat model assumes:
 - Only authorize trusted agents to access secrets
 - Review agent permissions regularly
 - Restrict access to the host and Docker volumes running the vault container
+- Ensure strict filesystem and infrastructure controls so that the database file (`/data/nanofleet-vault.db`) and its backups/snapshots are only readable by trusted system components (for example: lock down backup targets, avoid sharing the volume with untrusted containers, and use storage-level encryption and access controls where available).
