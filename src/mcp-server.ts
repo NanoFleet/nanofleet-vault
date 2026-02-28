@@ -4,6 +4,8 @@ import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/
 import { z } from 'zod';
 import { getDecryptedValue, getSecretByName, isAgentAuthorized } from './db';
 
+const MCP_PORT = Number(process.env.MCP_PORT) || 8823;
+
 const agentIdStorage = new AsyncLocalStorage<string>();
 
 export function getCallerAgentId(): string {
@@ -81,7 +83,7 @@ export async function startMcpServer(): Promise<void> {
 	>();
 
 	Bun.serve({
-		port: 8823,
+		port: MCP_PORT,
 		fetch: async (req) => {
 			const url = new URL(req.url);
 			if (url.pathname !== '/mcp') {
@@ -124,5 +126,5 @@ export async function startMcpServer(): Promise<void> {
 		},
 	});
 
-	console.log('[MCP] Server listening on :8823');
+	console.log(`[MCP] Server listening on :${MCP_PORT}`);
 }
