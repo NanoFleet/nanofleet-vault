@@ -15,7 +15,7 @@ Include as much of the following as possible:
 
 ## Encryption Model
 
-nanofleet-vault uses XOR+Base64 obfuscation keyed by `VAULT_ENCRYPTION_KEY` to protect secrets at rest. This provides limited obfuscation against casual inspection of the database file, but is **not** cryptographically strong encryption and should **not** be relied on if an attacker can obtain a copy of the database. **This mechanism is vulnerable to cryptanalysis and must not be used to protect sensitive or regulated data in production environments.** Anyone with access to both the database (or any of its backups/snapshots) and the `VAULT_ENCRYPTION_KEY` can recover all secret values. For strong protection at rest, use an industry-standard encryption solution (for example, AES-256-GCM via a dedicated secrets management system or hardware security module).
+nanofleet-vault encrypts secrets at rest using **AES-256-GCM** with a unique random salt and IV per secret. The encryption key is derived from `VAULT_ENCRYPTION_KEY` via **PBKDF2-SHA256** (100,000 iterations, 16-byte random salt). The GCM auth tag provides integrity verification — any tampering with the ciphertext will cause decryption to fail. Anyone with access to both the database (or any of its backups/snapshots) and the `VAULT_ENCRYPTION_KEY` can recover all secret values.
 
 The threat model assumes:
 - The host running NanoFleet is trusted
