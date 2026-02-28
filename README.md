@@ -6,7 +6,7 @@ A [NanoFleet](https://github.com/NanoFleet/nanofleet) plugin that provides a sec
 
 ## Features
 
-- Secrets encrypted at rest (XOR+base64, keyed by a unique `VAULT_ENCRYPTION_KEY` auto-generated at install)
+- Secrets encrypted at rest (AES-256-GCM with PBKDF2 key derivation, keyed by a unique `VAULT_ENCRYPTION_KEY` auto-generated at install)
 - Per-secret agent whitelist
 - Web UI to manage secrets and agent assignments
 - MCP tool for agent access
