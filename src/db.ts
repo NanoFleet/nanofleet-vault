@@ -2,7 +2,7 @@ import { Database } from 'bun:sqlite';
 import { randomUUID } from 'node:crypto';
 import { decrypt, encrypt } from './crypto';
 
-const DB_PATH = '/data/nanofleet-vault.db';
+const DB_PATH = process.env.NANOFLEET_DB_PATH ?? '/data/nanofleet-vault.db';
 
 let db: Database;
 
