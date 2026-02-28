@@ -114,10 +114,10 @@ export function updateSecret(
 		value?: string;
 		agentIds?: string[];
 	},
-): boolean {
+): SecretRow | null {
 	const db = getDb();
 	const existing = getSecretById(id);
-	if (!existing) return false;
+	if (!existing) return null;
 
 	const now = Date.now();
 	const name = fields.name ?? existing.name;
@@ -145,7 +145,14 @@ export function updateSecret(
 		}
 	}
 
-	return true;
+	return {
+		id,
+		name,
+		description: description ?? null,
+		encrypted_value,
+		created_at: existing.created_at,
+		updated_at: now,
+	};
 }
 
 export function deleteSecret(id: string): boolean {
