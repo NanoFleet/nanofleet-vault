@@ -1,6 +1,5 @@
 {
   "name": "nanofleet-vault",
-  "version": "0.0.2",
   "description": "Secret manager with per-agent access control",
   "author": "NanoFleet",
   "image": "ghcr.io/nanofleet/nanofleet-vault:latest",
