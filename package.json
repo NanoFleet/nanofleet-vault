@@ -1,6 +1,6 @@
 {
   "name": "nanofleet-vault",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "scripts": {
     "dev": "bun run --hot src/index.ts",
